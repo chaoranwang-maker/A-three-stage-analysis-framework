@@ -384,7 +384,6 @@ ps_scores <- predict(regression_forest(W_matrix_temp, df$treatment, num.trees = 
 df$ps_score <- ps_scores
 
 
-cat("\n--- 9.1 Logistic Propensity Score ---\n")
 ps_logit_model <- glm(weighting_formula, data = df, family = binomial(link = "logit"))
 df$ps_logit <- predict(ps_logit_model, type = "response")
 df$iptw_logit <- ifelse(df$treatment == 1, 1/df$ps_logit, 1/(1-df$ps_logit))
@@ -397,7 +396,7 @@ cat("\nLogistic PS IPTW Results:\n")
 print(summary(cox_logit))
 
 
-cat("\n--- 9.2 Overlap Weighting (ATO) ---\n")
+
 W_ato <- weightit(weighting_formula,
                   data = df,
                   method = "gbm",
@@ -411,7 +410,7 @@ cat("\nOverlap Weighting Results:\n")
 print(summary(cox_ato))
 
 
-cat("\n--- 9.3 Trimmed Analysis (Positivity) ---\n")
+
 common_support <- (df$ps_score > 0.05) & (df$ps_score < 0.95)
 df_trimmed <- df[common_support, ]
 
@@ -434,7 +433,7 @@ sens_summary <- data.frame(
 )
 write.csv(sens_summary, paste0(save_path, "Table_Sensitivity_Summary.csv"), row.names = FALSE)
 
-cat("\nSensitivity analyses completed\n")
+
 
 
 nejm_colors <- c("Control" = "#BC3C29", "YDJDG" = "#0072B5")
@@ -547,7 +546,7 @@ Y_forest <- regression_forest(W_confounders, Y, num.trees = 2000, sample.weights
 Y_hat <- predict(Y_forest)$predictions
 Y_resid <- Y - Y_hat
 
-cat("Residualization completed\n")
+
 
 
 set.seed(123)
@@ -788,27 +787,8 @@ df$ITE_upper <- ite + 1.96 * ite_se
 cat(paste("ITE range:", round(min(ite), 2), "to", round(max(ite), 2), "days\n"))
 cat(paste("Mean ITE:", round(mean(ite), 2), "days\n"))
 
-cat("\n=== Step 17: E-value Calculation ===\n")
 
-if (hr < 1) {
-  observed_rr <- 1/hr
-  ci_lower_rr <- 1/ci_upper  
-  ci_upper_rr <- 1/ci_lower
-} else {
-  observed_rr <- hr
-  ci_lower_rr <- ci_lower
-  ci_upper_rr <- ci_upper
-}
 
-e_value <- observed_rr + sqrt(observed_rr * (observed_rr - 1))
-e_value_lower <- ci_lower_rr + sqrt(ci_lower_rr * (ci_lower_rr - 1))
-
-cat("Observed HR:", round(hr, 2), "\n")
-cat("Observed RR for E-value:", round(observed_rr, 2), "\n")
-cat("E-value:", round(e_value, 2), "\n")
-cat("E-value (lower CI):", round(e_value_lower, 2), "\n")
-cat("Interpretation: Unmeasured confounder needs RR of", round(e_value, 2), 
-    "to fully explain away the observed effect.\n")
 calc_weighted_smd <- function(x1, x2, w1, w2) {
   mu1 <- weighted.mean(x1, w1, na.rm = TRUE)
   mu2 <- weighted.mean(x2, w2, na.rm = TRUE)
@@ -965,7 +945,7 @@ write.csv(comparison_data_tertile,
           paste0(save_path, "Results_Tertile_Heatmap_Data.csv"), 
           row.names = FALSE)
 
-cat("\nStep 18 completed: Both Tertile-based and K-means profiling finished.\n")
+
 p1 <- ggplot(ps_df, aes(x = PS, fill = Treatment)) +
   geom_density(alpha = 0.6) +
   geom_vline(xintercept = c(0.05, 0.95), linetype = "dashed", color = "red") +
@@ -1134,6 +1114,5 @@ write.csv(screen_df %>% head(10) %>% mutate(Rank = row_number()),
           paste0(save_path, "Table_S2_Core_Markers_Top10.csv"), 
           row.names = FALSE)
 
-cat("Screening results saved: All variables (n=", nrow(screen_df), ") and Top 10\n")
-cat("\n=== Analysis Completed ===\n")
+
 
